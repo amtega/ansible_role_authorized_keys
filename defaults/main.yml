@@ -41,3 +41,7 @@ authorized_keys_defaults: {}
 # follow the structure detailed before for `authorized_keys`
 
 authorized_keys_load_from_hostvars: no
+
+# Hide sensitive information
+
+authorized_keys_no_log: yes
