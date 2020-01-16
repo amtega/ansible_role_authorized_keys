@@ -28,9 +28,19 @@ galaxy_info:
 
 dependencies:
   - role: amtega.check_platform
-    tags:
-      - never
+    vars:
+      check_platform_distributions:
+        centos: 6
+        debian: 9
+        fedora: 29
+        rhel: 6
 
   - role: amtega.select_hostvars
-    tags:
-      - never
+    vars:
+      select_hostvars_query:
+        pattern: "^authorized_keys_.*"
+        exclude_pattern: >-
+          ^authorized_keys_(defaults|load_from_hostvars|no_log)$
+        fact_name: authorized_keys_hostvars
+        output_type: list
+    when: authorized_keys_load_from_hostvars | bool
