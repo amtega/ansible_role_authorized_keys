@@ -29,7 +29,7 @@
 
 authorized_keys: []
 
-# Dicitionary with the defaults options to use if no other ones are specified in
+# Dictionary with the defaults options to use if no other ones are specified in
 # the `authorized_keys` variable. The members of the dict are the same
 # attributes that the ones expected by the ansible authorized_keys module
 

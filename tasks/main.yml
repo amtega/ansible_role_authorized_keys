@@ -2,6 +2,79 @@
 # Role tasks
 
 - block:
+    - name: Gather home directories
+      shell: >-
+        getent passwd {{ authorized_keys_item.user
+                         | default(authorized_keys_defaults.user) }} \
+        | cut -d: -f6
+      args:
+        warn: no
+      changed_when: no
+      register: authorized_keys_gather_homes_result
+      when: authorized_keys_item.path is not defined
+      loop: "{{ authorized_keys_to_manage }}"
+      loop_control:
+        loop_var: authorized_keys_item
+        index_var: authorized_keys_index
+        label: >-
+          {{ authorized_keys_item.comment | default(authorized_keys_index) }}
+      no_log: "{{ authorized_keys_no_log }}"
+
+    - when: authorized_keys_item.path is not defined
+      vars:
+        authorized_keys_home_dir: >-
+          {{ authorized_keys_gather_homes_result
+             .results[authorized_keys_index].stdout }}
+      block:
+        - name: Check home directories
+          stat:
+            path: "{{ authorized_keys_home_dir }}"
+          register: authorized_keys_check_homes_result
+          loop: "{{ authorized_keys_to_manage }}"
+          loop_control:
+            loop_var: authorized_keys_item
+            index_var: authorized_keys_index
+            label: >-
+              {{ authorized_keys_item.comment
+                 | default(authorized_keys_index) }}
+          no_log: "{{ authorized_keys_no_log }}"
+
+        - name: Setup home directories
+          file:
+            state: directory
+            path: "{{ authorized_keys_home_dir }}"
+            owner: >-
+              {{ authorized_keys_item.user
+                 | default(authorized_keys_defaults.user) }}
+            group: users
+            mode: "0700"
+          loop: "{{ authorized_keys_to_manage }}"
+          loop_control:
+            loop_var: authorized_keys_item
+            index_var: authorized_keys_index
+            label: >-
+              {{ authorized_keys_item.comment
+                 | default(authorized_keys_index) }}
+          no_log: "{{ authorized_keys_no_log }}"
+
+        - name: Setup .ssh directory
+          file:
+            state: directory
+            path: "{{ authorized_keys_home_dir }}/.ssh"
+            owner: >-
+              {{ authorized_keys_item.user
+                 | default(authorized_keys_defaults.user) }}
+            group: users
+            mode: "0700"
+          loop: "{{ authorized_keys_to_manage }}"
+          loop_control:
+            loop_var: authorized_keys_item
+            index_var: authorized_keys_index
+            label: >-
+              {{ authorized_keys_item.comment
+                | default(authorized_keys_index) }}
+          no_log: "{{ authorized_keys_no_log }}"
+
     - name: Setup SSH authorized keys
       authorized_key:
         comment: >-
@@ -33,17 +106,20 @@
              | default(authorized_keys_defaults.user) }}
         validate_certs: >-
           {{ authorized_keys_item.validate_certs
-             | default(authorized_keys_defaults.validate_certs) | default(omit) }}
+             | default(authorized_keys_defaults.validate_certs)
+             | default(omit) }}
       loop: "{{ authorized_keys_to_manage }}"
       loop_control:
         loop_var: authorized_keys_item
         index_var: authorized_keys_index
-        label: "{{ authorized_keys_item.comment | default(authorized_keys_index) }}"
+        label: >-
+          {{ authorized_keys_item.comment | default(authorized_keys_index) }}
       no_log: "{{ authorized_keys_no_log }}"
-      vars:
-        authorized_keys_to_manage: >-
-          {{ authorized_keys
-             + ((authorized_keys_load_from_hostvars)
-                | ternary(authorized_keys_hostvars | default([]) | flatten, [])) }}
+
+  vars:
+    authorized_keys_to_manage: >-
+      {{ authorized_keys
+         + ((authorized_keys_load_from_hostvars)
+            | ternary(authorized_keys_hostvars | default([]) | flatten, [])) }}
   tags:
     - role::authorized_keys
