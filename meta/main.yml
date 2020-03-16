@@ -40,7 +40,7 @@ dependencies:
       select_hostvars_query:
         pattern: "^authorized_keys_.*"
         exclude_pattern: >-
-          ^authorized_keys_(defaults|load_from_hostvars|no_log)$
+          ^authorized_keys_(defaults|load_from_hostvars|no_log|.*_result)$
         fact_name: authorized_keys_hostvars
         output_type: list
     when: authorized_keys_load_from_hostvars | bool
