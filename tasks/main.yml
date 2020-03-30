@@ -39,41 +39,43 @@
                  | default(authorized_keys_index) }}
           no_log: "{{ authorized_keys_no_log }}"
 
-        - name: Setup home directories
-          file:
-            state: directory
-            path: "{{ authorized_keys_home_dir }}"
-            owner: >-
-              {{ authorized_keys_item.user
-                 | default(authorized_keys_defaults.user) }}
-            group: users
-            mode: "0700"
-          loop: "{{ authorized_keys_to_manage }}"
-          loop_control:
-            loop_var: authorized_keys_item
-            index_var: authorized_keys_index
-            label: >-
-              {{ authorized_keys_item.comment
-                 | default(authorized_keys_index) }}
-          no_log: "{{ authorized_keys_no_log }}"
+        - when: authorized_keys_home_dir | length > 0
+          block:
+            - name: Setup home directories
+              file:
+                state: directory
+                path: "{{ authorized_keys_home_dir }}"
+                owner: >-
+                  {{ authorized_keys_item.user
+                     | default(authorized_keys_defaults.user) }}
+                group: users
+                mode: "0700"
+              loop: "{{ authorized_keys_to_manage }}"
+              loop_control:
+                loop_var: authorized_keys_item
+                index_var: authorized_keys_index
+                label: >-
+                  {{ authorized_keys_item.comment
+                     | default(authorized_keys_index) }}
+              no_log: "{{ authorized_keys_no_log }}"
 
-        - name: Setup .ssh directory
-          file:
-            state: directory
-            path: "{{ authorized_keys_home_dir }}/.ssh"
-            owner: >-
-              {{ authorized_keys_item.user
-                 | default(authorized_keys_defaults.user) }}
-            group: users
-            mode: "0700"
-          loop: "{{ authorized_keys_to_manage }}"
-          loop_control:
-            loop_var: authorized_keys_item
-            index_var: authorized_keys_index
-            label: >-
-              {{ authorized_keys_item.comment
-                | default(authorized_keys_index) }}
-          no_log: "{{ authorized_keys_no_log }}"
+            - name: Setup .ssh directory
+              file:
+                state: directory
+                path: "{{ authorized_keys_home_dir }}/.ssh"
+                owner: >-
+                  {{ authorized_keys_item.user
+                     | default(authorized_keys_defaults.user) }}
+                group: users
+                mode: "0700"
+              loop: "{{ authorized_keys_to_manage }}"
+              loop_control:
+                loop_var: authorized_keys_item
+                index_var: authorized_keys_index
+                label: >-
+                  {{ authorized_keys_item.comment
+                    | default(authorized_keys_index) }}
+              no_log: "{{ authorized_keys_no_log }}"
 
     - name: Setup SSH authorized keys
       authorized_key:
