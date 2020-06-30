@@ -1,0 +1,10 @@
+---
+
+- name: Prepare
+  hosts: molecule_hosts
+  gather_facts: no
+  tasks:
+    - name: Setup packages
+      package:
+        name: openssh
+        state: present

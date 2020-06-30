@@ -1,0 +1,16 @@
+---
+
+- name: Verify
+  hosts: molecule_hosts
+  gather_facts: no
+  tasks:
+    - name: Read authorized_keys file
+      command: cat /root/.ssh/authorized_keys
+      changed_when: no
+      register: read_keys_result
+
+    - name: Check that authorized_keys file contains required pairs
+      assert:
+        that:
+          - read_keys_result.stdout is search("Test key pair 1")
+          - read_keys_result.stdout is search("Test key pair 2")
