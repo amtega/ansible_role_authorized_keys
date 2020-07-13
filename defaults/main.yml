@@ -16,6 +16,13 @@
 #   - user
 #   - validate_certs
 #
+# Additionally, you can use the following fields to control the behaviour of the
+# role when it need to create the user home directory
+#
+#   - home_parent_dir_owner: <user>   # Owner the user home parent directory
+#   - home_parent_dir_group: <group>  # Group the user home parent directory
+#   - home_parent_dir_mode: <mode>    # Mode the user home parent directory
+#
 # Sample:
 #
 # authorized_keys:
@@ -33,7 +40,10 @@ authorized_keys: []
 # the `authorized_keys` variable. The members of the dict are the same
 # attributes that the ones expected by the ansible authorized_keys module
 
-authorized_keys_defaults: {}
+authorized_keys_defaults:
+  home_parent_dir_owner: root
+  home_parent_dir_group: root
+  home_parent_dir_mode: "0711"
 
 # Indicate `authorized_keys` must be loaded also from host variables. Any host
 # variable that begins with "authorized_keys_*" and contains the necessary
