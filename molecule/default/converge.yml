@@ -13,5 +13,6 @@
         - /root/test_id_ssh_rsa1
         - /root/test_id_ssh_rsa2
 
-    - include_role:
+    - name: Test role
+      include_role:
         name: amtega.authorized_keys
