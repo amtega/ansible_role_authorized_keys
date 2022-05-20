@@ -1,0 +1,14 @@
+{% for k in authorized_keys
+            + ((authorized_keys_load_from_hostvars)
+              | ternary(authorized_keys_hostvars
+                        | default([])
+                        | flatten,
+                        [])) %}
+{% if k.user is not string and k.user is sequence %}
+{% for u in k.user %}
+- {{ k | combine({"user": u}) | to_json }}
+{% endfor %}
+{% else %}
+- {{ k | to_json }}
+{% endif %}
+{% endfor %}
