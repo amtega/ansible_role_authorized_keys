@@ -8,3 +8,8 @@
       package:
         name: openssh
         state: present
+
+    - name: Setup testing user
+      user:
+        name: testuser
+        comment: Testing user

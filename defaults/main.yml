@@ -13,15 +13,15 @@
 #   - manage_dir
 #   - path
 #   - state
-#   - user
+#   - user                            # Can be a list of strings
 #   - validate_certs
 #
 # Additionally, you can use the following fields to control the behaviour of the
 # role when it need to create the user home directory
 #
-#   - home_parent_dir_owner: <user>   # Owner the user home parent directory
-#   - home_parent_dir_group: <group>  # Group the user home parent directory
-#   - home_parent_dir_mode: <mode>    # Mode the user home parent directory
+#   - home_parent_dir_owner: <user>   # Owner of the user home parent directory
+#   - home_parent_dir_group: <group>  # Group of the user home parent directory
+#   - home_parent_dir_mode: <mode>    # Mode of the user home parent directory
 #
 # Sample:
 #

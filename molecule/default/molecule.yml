@@ -9,7 +9,7 @@ dependency:
     role-file: "${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml"
     requirements-file: "${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml"
 driver:
-  name: docker
+  name: podman
 lint: "${MOLECULE_SCENARIO_DIRECTORY}/linters.sh"
 platforms:
   - name: "centos6-${INSTANCE_UUID:-1}"
@@ -63,6 +63,12 @@ provisioner:
           authorized_keys_load_from_hostvars: yes
           authorized_keys_extra:
             - comment: Test key pair 1
+              key: "{{ setup_ssh_keys_result.results.0.public_key }}"
+          authorized_keys_extra_multiple_users:
+            - user:
+                - root
+                - testuser
+              comment: Test key pair 1
               key: "{{ setup_ssh_keys_result.results.0.public_key }}"
       molecule_hosts_fedora:
         vars:

@@ -2,127 +2,123 @@
 # Role tasks
 
 - block:
+    - name: Setup facts with authorized keys to manage
+      set_fact:
+        _authorized_keys_to_manage: >-
+          {{ lookup("template", "authorized_keys.yml.j2") | from_yaml }}
+
+    - name: Setup facts with authorized keys users to manage
+      set_fact:
+        _authorized_keys_users: >-
+          {{ (_authorized_keys_to_manage
+              | selectattr("user", "defined")
+              | selectattr("path", "undefined")
+              | map(attribute="user")
+              | list
+              + (authorized_keys_defaults.path is undefined)
+                | ternary([authorized_keys_defaults.user
+                           | default([])],
+                          []))
+             | flatten
+             | unique
+             | sort }}
+
     - name: Gather home directories
       shell: >-
-        getent passwd {{ authorized_keys_item.user
-                         | default(authorized_keys_defaults.user) }} \
+        getent passwd {{ authorized_keys_user }} \
         | cut -d: -f6
       args:
         warn: no
       changed_when: no
       register: authorized_keys_gather_homes_result
       when: authorized_keys_item.path is not defined
-      loop: "{{ authorized_keys_to_manage }}"
+      loop: "{{ _authorized_keys_users }}"
       loop_control:
-        loop_var: authorized_keys_item
-        index_var: authorized_keys_index
-        label: >-
-          {{ authorized_keys_item.comment | default(authorized_keys_index) }}
+        loop_var: authorized_keys_user
       no_log: "{{ authorized_keys_no_log }}"
 
-    - when: authorized_keys_item.path is not defined
-      vars:
-        authorized_keys_home_dir: >-
-          {{ authorized_keys_gather_homes_result
-             .results[authorized_keys_index].stdout }}
+    - name: Check home directories parent directories
+      stat:
+        path: "{{ authorized_keys_home_dir | dirname }}"
+      register: authorized_keys_check_homes_base_dir_result
+      loop: "{{ _authorized_keys_users }}"
+      loop_control:
+        loop_var: authorized_keys_user
+        index_var: authorized_keys_index
+      no_log: "{{ authorized_keys_no_log }}"
+
+    - name: Check home directories
+      stat:
+        path: "{{ authorized_keys_home_dir }}"
+      register: authorized_keys_check_homes_result
+      loop: "{{ _authorized_keys_users }}"
+      loop_control:
+        loop_var: authorized_keys_user
+        index_var: authorized_keys_index
+      no_log: "{{ authorized_keys_no_log }}"
+
+    - when: authorized_keys_home_dir | length > 0
       block:
-        - name: Check home directories parent directories
-          stat:
+        - name: Setup home directories parent directory
+          file:
+            state: directory
             path: "{{ authorized_keys_home_dir | dirname }}"
-          register: authorized_keys_check_homes_base_dir_result
-          loop: "{{ authorized_keys_to_manage }}"
+            owner: >-
+              {{ authorized_keys_item.home_parent_dir_owner
+                 | default(
+                     authorized_keys_defaults.home_parent_dir_owner) }}
+            group: >-
+              {{ authorized_keys_item.home_parent_dir_group
+                 | default(
+                     authorized_keys_defaults.home_parent_dir_group) }}
+            mode: >-
+              {{ authorized_keys_item.home_parent_dir_mode
+                 | default(
+                     authorized_keys_defaults.home_parent_dir_mode) }}
+          when: >-
+            not authorized_keys_check_homes_base_dir_result.results
+            [authorized_keys_index].stat.exists
+            and authorized_keys_home_dir | dirname != "/"
+          loop: "{{ _authorized_keys_users }}"
           loop_control:
-            loop_var: authorized_keys_item
+            loop_var: authorized_keys_user
             index_var: authorized_keys_index
-            label: >-
-              {{ authorized_keys_item.comment
-                 | default(authorized_keys_index) }}
           no_log: "{{ authorized_keys_no_log }}"
 
-        - name: Check home directories
-          stat:
+        - name: Setup home directories
+          file:
+            state: directory
             path: "{{ authorized_keys_home_dir }}"
-          register: authorized_keys_check_homes_result
-          loop: "{{ authorized_keys_to_manage }}"
+            owner: >-
+              {{ authorized_keys_item.user
+                 | default(authorized_keys_defaults.user) }}
+            mode: "0700"
+          when: >-
+            not authorized_keys_check_homes_result.results
+            [authorized_keys_index].stat.exists
+          register: authorized_keys_setup_homes_result
+          loop: "{{ _authorized_keys_users }}"
           loop_control:
-            loop_var: authorized_keys_item
+            loop_var: authorized_keys_user
             index_var: authorized_keys_index
-            label: >-
-              {{ authorized_keys_item.comment
-                 | default(authorized_keys_index) }}
           no_log: "{{ authorized_keys_no_log }}"
 
-        - when: authorized_keys_home_dir | length > 0
-          block:
-            - name: Setup home directories parent directory
-              file:
-                state: directory
-                path: "{{ authorized_keys_home_dir | dirname }}"
-                owner: >-
-                  {{ authorized_keys_item.home_parent_dir_owner
-                     | default(
-                         authorized_keys_defaults.home_parent_dir_owner) }}
-                group: >-
-                  {{ authorized_keys_item.home_parent_dir_group
-                     | default(
-                         authorized_keys_defaults.home_parent_dir_group) }}
-                mode: >-
-                  {{ authorized_keys_item.home_parent_dir_mode
-                     | default(
-                         authorized_keys_defaults.home_parent_dir_mode) }}
-              when: >-
-                not authorized_keys_check_homes_base_dir_result.results
-                [authorized_keys_index].stat.exists
-                and authorized_keys_home_dir | dirname != "/"
-              loop: "{{ authorized_keys_to_manage }}"
-              loop_control:
-                loop_var: authorized_keys_item
-                index_var: authorized_keys_index
-                label: >-
-                  {{ authorized_keys_item.comment
-                     | default(authorized_keys_index) }}
-              no_log: "{{ authorized_keys_no_log }}"
-
-            - name: Setup home directories
-              file:
-                state: directory
-                path: "{{ authorized_keys_home_dir }}"
-                owner: >-
-                  {{ authorized_keys_item.user
-                     | default(authorized_keys_defaults.user) }}
-                mode: "0700"
-              when: >-
-                not authorized_keys_check_homes_result.results
-                [authorized_keys_index].stat.exists
-              register: authorized_keys_setup_homes_result
-              loop: "{{ authorized_keys_to_manage }}"
-              loop_control:
-                loop_var: authorized_keys_item
-                index_var: authorized_keys_index
-                label: >-
-                  {{ authorized_keys_item.comment
-                     | default(authorized_keys_index) }}
-              no_log: "{{ authorized_keys_no_log }}"
-
-            - name: Setup .ssh directory
-              file:
-                state: directory
-                path: "{{ authorized_keys_home_dir }}/.ssh"
-                owner: >-
-                  {{ authorized_keys_item.user
-                     | default(authorized_keys_defaults.user) }}
-                mode: "0700"
-              when: >-
-                authorized_keys_setup_homes_result.results
-                [authorized_keys_index] is changed
-              loop: "{{ authorized_keys_to_manage }}"
-              loop_control:
-                loop_var: authorized_keys_item
-                index_var: authorized_keys_index
-                label: >-
-                  {{ authorized_keys_item.comment
-                    | default(authorized_keys_index) }}
-              no_log: "{{ authorized_keys_no_log }}"
+        - name: Setup .ssh directory
+          file:
+            state: directory
+            path: "{{ authorized_keys_home_dir }}/.ssh"
+            owner: >-
+              {{ authorized_keys_item.user
+                 | default(authorized_keys_defaults.user) }}
+            mode: "0700"
+          when: >-
+            authorized_keys_setup_homes_result.results
+            [authorized_keys_index] is changed
+          loop: "{{ _authorized_keys_users }}"
+          loop_control:
+            loop_var: authorized_keys_user
+            index_var: authorized_keys_index
+          no_log: "{{ authorized_keys_no_log }}"
 
     - name: Setup SSH authorized keys
       authorized_key:
@@ -157,18 +153,20 @@
           {{ authorized_keys_item.validate_certs
              | default(authorized_keys_defaults.validate_certs)
              | default(omit) }}
-      loop: "{{ authorized_keys_to_manage }}"
+      loop: "{{ _authorized_keys_to_manage }}"
       loop_control:
         loop_var: authorized_keys_item
         index_var: authorized_keys_index
         label: >-
-          {{ authorized_keys_item.comment | default(authorized_keys_index) }}
+          {{ authorized_keys_item.user
+             | default(authorized_keys_defaults.user)
+             + " / "
+             ~ authorized_keys_item.comment
+               | default(authorized_keys_index) }}
       no_log: "{{ authorized_keys_no_log }}"
-
   vars:
-    authorized_keys_to_manage: >-
-      {{ authorized_keys
-         + ((authorized_keys_load_from_hostvars)
-            | ternary(authorized_keys_hostvars | default([]) | flatten, [])) }}
+    authorized_keys_home_dir: >-
+      {{ authorized_keys_gather_homes_result
+         .results[authorized_keys_index].stdout }}
   tags:
     - role::authorized_keys
