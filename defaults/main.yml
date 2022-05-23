@@ -45,6 +45,10 @@ authorized_keys_defaults:
   home_parent_dir_group: root
   home_parent_dir_mode: "0711"
 
+# Ignore missing user errors
+
+authorized_keys_ignore_missing_user: yes
+
 # Indicate `authorized_keys` must be loaded also from host variables. Any host
 # variable that begins with "authorized_keys_*" and contains the necessary
 # attributes will be loaded as an item to manage by the role. The variables must

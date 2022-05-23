@@ -153,6 +153,13 @@
           {{ authorized_keys_item.validate_certs
              | default(authorized_keys_defaults.validate_certs)
              | default(omit) }}
+      register: authorized_keys_setup_ssh_key_result
+      failed_when:
+        authorized_keys_setup_ssh_key_result.msg is defined
+        and (not authorized_keys_ignore_missing_user | bool
+             or (authorized_keys_ignore_missing_user | bool
+                 and authorized_keys_setup_ssh_key_result.msg
+                     is not search("Failed to lookup user")))
       loop: "{{ _authorized_keys_to_manage }}"
       loop_control:
         loop_var: authorized_keys_item
@@ -164,6 +171,8 @@
              ~ authorized_keys_item.comment
                | default(authorized_keys_index) }}
       no_log: "{{ authorized_keys_no_log }}"
+      environment:
+        LANGUAGE: en_US
   vars:
     authorized_keys_home_dir: >-
       {{ authorized_keys_gather_homes_result
