@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2022-05-23
+### Added
+- Added variable authorized_keys_ignore_missing_user. Related to ansible/main#174
+
 ## [1.2.0] - 2022-05-20
 ### Changed
 - Added support for list in user attribute. Related to ansible/playbooks/linux#88
