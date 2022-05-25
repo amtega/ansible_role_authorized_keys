@@ -90,7 +90,7 @@
             state: directory
             path: "{{ authorized_keys_home_dir }}"
             owner: >-
-              {{ authorized_keys_item.user
+              {{ authorized_keys_user
                  | default(authorized_keys_defaults.user) }}
             mode: "0700"
           when: >-
@@ -108,7 +108,7 @@
             state: directory
             path: "{{ authorized_keys_home_dir }}/.ssh"
             owner: >-
-              {{ authorized_keys_item.user
+              {{ authorized_keys_user
                  | default(authorized_keys_defaults.user) }}
             mode: "0700"
           when: >-
