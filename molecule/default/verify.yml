@@ -5,17 +5,17 @@
   gather_facts: no
   tasks:
     - name: Read root authorized_keys file
-      command: cat /root/.ssh/authorized_keys
+      ansible.builtin.command: cat /root/.ssh/authorized_keys
       changed_when: no
       register: read_root_keys_result
 
     - name: Read testuser authorized_keys file
-      command: cat /home/testuser/.ssh/authorized_keys
+      ansible.builtin.command: cat /home/testuser/.ssh/authorized_keys
       changed_when: no
       register: read_testuser_keys_result
 
     - name: Check that authorized_keys file contains required pairs
-      assert:
+      ansible.builtin.assert:
         that:
           - read_root_keys_result.stdout is search("Test key pair 1")
           - read_root_keys_result.stdout is search("Test key pair 2")

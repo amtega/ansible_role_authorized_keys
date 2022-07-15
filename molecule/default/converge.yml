@@ -14,5 +14,5 @@
         - /root/test_id_ssh_rsa2
 
     - name: Test role
-      include_role:
+      ansible.builtin.include_role:
         name: amtega.authorized_keys
