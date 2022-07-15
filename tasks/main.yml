@@ -1,14 +1,15 @@
 ---
 # Role tasks
 
-- block:
+- name: Setup authorized keys
+  block:
     - name: Setup facts with authorized keys to manage
-      set_fact:
+      ansible.builtin.set_fact:
         _authorized_keys_to_manage: >-
           {{ lookup("template", "authorized_keys.yml.j2") | from_yaml }}
 
     - name: Setup facts with authorized keys users to manage
-      set_fact:
+      ansible.builtin.set_fact:
         _authorized_keys_users: >-
           {{ (_authorized_keys_to_manage
               | selectattr("user", "defined")
@@ -24,7 +25,7 @@
              | sort }}
 
     - name: Gather home directories
-      shell: >-
+      ansible.builtin.shell: >-
         getent passwd {{ authorized_keys_user }} \
         | cut -d: -f6
       args:
@@ -38,7 +39,7 @@
       no_log: "{{ authorized_keys_no_log }}"
 
     - name: Check home directories parent directories
-      stat:
+      ansible.builtin.stat:
         path: "{{ authorized_keys_home_dir | dirname }}"
       register: authorized_keys_check_homes_base_dir_result
       loop: "{{ _authorized_keys_users }}"
@@ -48,7 +49,7 @@
       no_log: "{{ authorized_keys_no_log }}"
 
     - name: Check home directories
-      stat:
+      ansible.builtin.stat:
         path: "{{ authorized_keys_home_dir }}"
       register: authorized_keys_check_homes_result
       loop: "{{ _authorized_keys_users }}"
@@ -57,10 +58,11 @@
         index_var: authorized_keys_index
       no_log: "{{ authorized_keys_no_log }}"
 
-    - when: authorized_keys_home_dir | length > 0
+    - name: Setup home directories
+      when: authorized_keys_home_dir | length > 0
       block:
         - name: Setup home directories parent directory
-          file:
+          ansible.builtin.file:
             state: directory
             path: "{{ authorized_keys_home_dir | dirname }}"
             owner: >-
@@ -86,7 +88,7 @@
           no_log: "{{ authorized_keys_no_log }}"
 
         - name: Setup home directories
-          file:
+          ansible.builtin.file:
             state: directory
             path: "{{ authorized_keys_home_dir }}"
             owner: >-
@@ -104,7 +106,7 @@
           no_log: "{{ authorized_keys_no_log }}"
 
         - name: Setup .ssh directory
-          file:
+          ansible.builtin.file:
             state: directory
             path: "{{ authorized_keys_home_dir }}/.ssh"
             owner: >-

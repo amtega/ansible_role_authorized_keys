@@ -5,11 +5,11 @@
   gather_facts: no
   tasks:
     - name: Setup packages
-      package:
+      ansible.builtin.package:
         name: openssh
         state: present
 
     - name: Setup testing user
-      user:
+      ansible.builtin.user:
         name: testuser
         comment: Testing user
