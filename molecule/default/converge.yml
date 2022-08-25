@@ -5,7 +5,7 @@
   gather_facts: no
   tasks:
     - name: Setup SSH key pairs
-      openssh_keypair:
+      community.crypto.openssh_keypair:
         path: "{{ item }}"
         size: 2048
       register: setup_ssh_keys_result
