@@ -123,7 +123,7 @@
           no_log: "{{ authorized_keys_no_log }}"
 
     - name: Setup SSH authorized keys
-      authorized_key:
+      ansible.posix.authorized_key:
         comment: >-
           {{ authorized_keys_item.comment
              | default(authorized_keys_defaults.comment) | default(omit) }}
