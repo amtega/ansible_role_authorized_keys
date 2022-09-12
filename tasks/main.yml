@@ -78,14 +78,16 @@
                  | default(
                      authorized_keys_defaults.home_parent_dir_mode) }}
           when: >-
-            not authorized_keys_check_homes_base_dir_result.results
-            [authorized_keys_index].stat.exists
+            not authorized_keys_results[authorized_keys_index].stat.exists
             and authorized_keys_home_dir | dirname != "/"
           loop: "{{ _authorized_keys_users }}"
           loop_control:
             loop_var: authorized_keys_user
             index_var: authorized_keys_index
           no_log: "{{ authorized_keys_no_log }}"
+          vars:
+            authorized_keys_results: >-
+              {{ authorized_keys_check_homes_base_dir_result.results }}
 
         - name: Setup home directories
           ansible.builtin.file:
@@ -95,15 +97,16 @@
               {{ authorized_keys_user
                  | default(authorized_keys_defaults.user) }}
             mode: "0700"
-          when: >-
-            not authorized_keys_check_homes_result.results
-            [authorized_keys_index].stat.exists
+          when: not authorized_keys_results[authorized_keys_index].stat.exists
           register: authorized_keys_setup_homes_result
           loop: "{{ _authorized_keys_users }}"
           loop_control:
             loop_var: authorized_keys_user
             index_var: authorized_keys_index
           no_log: "{{ authorized_keys_no_log }}"
+          vars:
+            authorized_keys_results: >-
+              {{ authorized_keys_check_homes_result.results }}
 
         - name: Setup .ssh directory
           ansible.builtin.file:
@@ -114,8 +117,8 @@
                  | default(authorized_keys_defaults.user) }}
             mode: "0700"
           when: >-
-            authorized_keys_setup_homes_result.results
-            [authorized_keys_index] is changed
+            authorized_keys_setup_homes_result.results[authorized_keys_index]
+            is changed
           loop: "{{ _authorized_keys_users }}"
           loop_control:
             loop_var: authorized_keys_user
